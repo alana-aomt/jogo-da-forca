@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forca IoT · Agronegócio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --soil: #1a2e1a;
+      --leaf: #2d5a27;
+      --crop: #6b9b3a;
+      --sun: #e8a317;
+      --cream: #f2efe6;
+      --mist: #d8e4d0;
+      --ink: #132014;
+      --error: #c44b2b;
+      --ok: #3a7a32;
+      --panel: rgba(242, 239, 230, 0.92);
+      --shadow: 0 18px 40px rgba(19, 32, 20, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "DM Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 90% 60% at 10% 10%, rgba(232, 163, 23, 0.22), transparent 50%),
+        radial-gradient(ellipse 70% 50% at 90% 80%, rgba(107, 155, 58, 0.25), transparent 45%),
+        linear-gradient(160deg, #1f3d1c 0%, #2a4a28 40%, #1a2e1a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+
+    .app {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border-radius: 1.25rem;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    header {
+      padding: 1.5rem 1.5rem 1rem;
+      background:
+        linear-gradient(135deg, rgba(45, 90, 39, 0.12), transparent 60%),
+        linear-gradient(to bottom, #ebe6d8, var(--cream));
+      border-bottom: 1px solid rgba(45, 90, 39, 0.12);
+    }
+
+    .brand {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.65rem, 4vw, 2.15rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--leaf);
+      line-height: 1.1;
+    }
+
+    .brand span {
+      color: var(--sun);
+    }
+
+    .tagline {
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+      color: rgba(19, 32, 20, 0.7);
+    }
+
+    main {
+      padding: 1.25rem 1.5rem 1.75rem;
+    }
+
+    .screen {
+      display: none;
+      animation: rise 0.35s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-family: "Fraunces", serif;
+      font-size: 1.25rem;
+      margin-bottom: 0.35rem;
+      color: var(--soil);
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      color: rgba(19, 32, 20, 0.65);
+      margin-bottom: 1.1rem;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .cat-btn {
+      appearance: none;
+      border: 1.5px solid rgba(45, 90, 39, 0.25);
+      background: #fffef9;
+      border-radius: 0.85rem;
+      padding: 1rem 0.85rem;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      font: inherit;
+      color: inherit;
+    }
+
+    .cat-btn:hover,
+    .cat-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: var(--crop);
+      background: #f7fbf2;
+      outline: none;
+    }
+
+    .cat-btn strong {
+      display: block;
+      font-size: 0.98rem;
+      margin-bottom: 0.25rem;
+      color: var(--leaf);
+    }
+
+    .cat-btn small {
+      color: rgba(19, 32, 20, 0.6);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      background: rgba(45, 90, 39, 0.1);
+      color: var(--leaf);
+    }
+
+    .chip.err {
+      background: rgba(196, 75, 43, 0.12);
+      color: var(--error);
+    }
+
+    .chip.ok {
+      background: rgba(58, 122, 50, 0.12);
+      color: var(--ok);
+    }
+
+    .chip.cat {
+      background: rgba(232, 163, 23, 0.18);
+      color: #8a5d08;
+    }
+
+    .game-layout {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .game-layout {
+        grid-template-columns: 200px 1fr;
+        align-items: start;
+      }
+    }
+
+    .gallows-wrap {
+      display: flex;
+      justify-content: center;
+      background:
+        linear-gradient(180deg, rgba(107, 155, 58, 0.08), transparent),
+        #fffef9;
+      border-radius: 1rem;
+      border: 1px solid rgba(45, 90, 39, 0.12);
+      padding: 0.75rem;
+    }
+
+    .gallows {
+      width: 170px;
+      height: 210px;
+    }
+
+    .gallows .part {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .gallows .part.visible {
+      opacity: 1;
+    }
+
+    .word-area {
+      text-align: center;
+    }
+
+    .category-label {
+      font-size: 0.85rem;
+      color: rgba(19, 32, 20, 0.6);
+      margin-bottom: 0.75rem;
+    }
+
+    .word {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+      min-height: 2.5rem;
+    }
+
+    .word-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.35rem 0.45rem;
+    }
+
+    .letter-slot {
+      width: 1.85rem;
+      height: 2.35rem;
+      border-bottom: 3px solid var(--leaf);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-family: "Fraunces", serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--soil);
+      text-transform: uppercase;
+    }
+
+    .wrong-letters {
+      min-height: 1.4rem;
+      font-size: 0.9rem;
+      color: var(--error);
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 0.35rem;
+    }
+
+    @media (max-width: 480px) {
+      .keyboard {
+        grid-template-columns: repeat(7, 1fr);
+      }
+    }
+
+    .key {
+      appearance: none;
+      border: none;
+      background: var(--leaf);
+      color: #f7fbf2;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.65rem 0;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+    }
+
+    .key:hover:not(:disabled) {
+      background: #3a6f33;
+      transform: translateY(-1px);
+    }
+
+    .key:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
+    .key.hit {
+      background: var(--ok);
+      opacity: 1;
+    }
+
+    .key.miss {
+      background: var(--error);
+      opacity: 0.7;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.15rem;
+      justify-content: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      font: inherit;
+      font-weight: 700;
+      padding: 0.7rem 1.15rem;
+      border-radius: 0.65rem;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--sun);
+      color: #3a2a05;
+    }
+
+    .btn-primary:hover {
+      background: #f0b12a;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--leaf);
+      border: 1.5px solid rgba(45, 90, 39, 0.35);
+    }
+
+    .result {
+      text-align: center;
+      padding: 0.5rem 0 0.25rem;
+    }
+
+    .result h2 {
+      font-size: 1.7rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .result.win h2 { color: var(--ok); }
+    .result.lose h2 { color: var(--error); }
+
+    .result p {
+      color: rgba(19, 32, 20, 0.75);
+      margin-bottom: 0.35rem;
+    }
+
+    .result .answer {
+      font-family: "Fraunces", serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--soil);
+      margin: 0.75rem 0 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: rgba(19, 32, 20, 0.45);
+      padding: 0 1.5rem 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">Forca <span>IoT</span></div>
+      <p class="tagline">Descubra aplicações de Internet das Coisas no agronegócio</p>
+    </header>
+
+    <main>
+      <!-- Seleção de categoria -->
+      <section id="screen-menu" class="screen active" aria-label="Escolher categoria">
+        <h2>Escolha uma categoria</h2>
+        <p class="hint">Cada tema traz termos reais usados em IoT no campo. Você tem 6 chances.</p>
+        <div class="categories" id="categories"></div>
+      </section>
+
+      <!-- Jogo -->
+      <section id="screen-game" class="screen" aria-label="Partida">
+        <div class="status-bar">
+          <span class="chip cat" id="chip-cat">Categoria</span>
+          <span class="chip ok">Acertos: <strong id="hits">0</strong></span>
+          <span class="chip err">Erros: <strong id="misses">0</strong> / 6</span>
+        </div>
+
+        <div class="game-layout">
+          <div class="gallows-wrap" aria-hidden="true">
+            <svg class="gallows" viewBox="0 0 170 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="20" y1="195" x2="90" y2="195" stroke="#5a3d22" stroke-width="6" stroke-linecap="round"/>
+              <line x1="40" y1="195" x2="40" y2="20" stroke="#5a3d22" stroke-width="6" stroke-linecap="round"/>
+              <line x1="40" y1="20" x2="115" y2="20" stroke="#5a3d22" stroke-width="6" stroke-linecap="round"/>
+              <line x1="115" y1="20" x2="115" y2="45" stroke="#5a3d22" stroke-width="4" stroke-linecap="round"/>
+              <circle class="part" data-part="0" cx="115" cy="62" r="16" stroke="#2d5a27" stroke-width="4"/>
+              <line class="part" data-part="1" x1="115" y1="78" x2="115" y2="125" stroke="#2d5a27" stroke-width="4" stroke-linecap="round"/>
+              <line class="part" data-part="2" x1="115" y1="95" x2="92" y2="115" stroke="#2d5a27" stroke-width="4" stroke-linecap="round"/>
+              <line class="part" data-part="3" x1="115" y1="95" x2="138" y2="115" stroke="#2d5a27" stroke-width="4" stroke-linecap="round"/>
+              <line class="part" data-part="4" x1="115" y1="125" x2="95" y2="160" stroke="#2d5a27" stroke-width="4" stroke-linecap="round"/>
+              <line class="part" data-part="5" x1="115" y1="125" x2="135" y2="160" stroke="#2d5a27" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="word-area">
+            <p class="category-label" id="word-hint"></p>
+            <div class="word" id="word" role="text" aria-live="polite"></div>
+            <p class="wrong-letters" id="wrong-letters" aria-live="polite"></p>
+            <div class="keyboard" id="keyboard"></div>
+            <div class="actions">
+              <button type="button" class="btn btn-ghost" id="btn-change">Trocar categoria</button>
+              <button type="button" class="btn btn-primary" id="btn-restart">Nova palavra</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resultado -->
+      <section id="screen-result" class="screen" aria-label="Resultado">
+        <div class="result" id="result-box">
+          <h2 id="result-title"></h2>
+          <p id="result-msg"></p>
+          <p class="answer" id="result-answer"></p>
+          <div class="status-bar" style="justify-content:center">
+            <span class="chip ok">Acertos: <strong id="result-hits">0</strong></span>
+            <span class="chip err">Erros: <strong id="result-misses">0</strong></span>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-ghost" id="btn-menu">Categorias</button>
+            <button type="button" class="btn btn-primary" id="btn-again">Jogar de novo</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <p class="footer-note">Use o teclado físico ou clique nas letras · 6 erros e a forca completa</p>
+  </div>
+
+  <script>
+    const MAX_ERRORS = 6;
+
+    const CATEGORIES = [
+      {
+        id: "sensores",
+        name: "Sensores",
+        desc: "Medição de solo, clima e cultura",
+        words: [
+          { word: "UMIDADE", hint: "Grandeza do solo medida por sensores capacitivos" },
+          { word: "PH DO SOLO", hint: "Indicador de acidez monitorado em tempo real" },
+          { word: "TEMPERATURA", hint: "Variável climática essencial na lavoura" },
+          { word: "LUMINOSIDADE", hint: "Intensidade de luz para fotossíntese" },
+          { word: "CONDUTIVIDADE", hint: "Indica salinidade e nutrientes no solo" },
+          { word: "ESTACAO METEOROLOGICA", hint: "Conjunto de sensores climáticos no campo" }
+        ]
+      },
+      {
+        id: "irrigacao",
+        name: "Irrigação",
+        desc: "Água inteligente e automática",
+        words: [
+          { word: "IRRIGACAO INTELIGENTE", hint: "Sistema que aplica água conforme demanda" },
+          { word: "ASPERSAO", hint: "Método de irrigação com jatos d'água" },
+          { word: "GOTEJAMENTO", hint: "Irrigação localizada gota a gota" },
+          { word: "VALVULA SOLENOIDE", hint: "Atuador que abre e fecha o fluxo de água" },
+          { word: "TENSAO HIDRICA", hint: "Estresse hídrico detectado por sensores" },
+          { word: "PIVO CENTRAL", hint: "Equipamento circular de irrigação" }
+        ]
+      },
+      {
+        id: "monitoramento",
+        name: "Monitoramento",
+        desc: "Culturas, pragas e produtividade",
+        words: [
+          { word: "AGRICULTURA DE PRECISAO", hint: "Gestão espacialmente diferenciada da lavoura" },
+          { word: "DRONE", hint: "Aeronave usada em mapeamento aéreo" },
+          { word: "NDVI", hint: "Índice de vegetação por imagem multiespectral" },
+          { word: "TELEMETRIA", hint: "Transmissão remota de dados do campo" },
+          { word: "PREDICAO DE PRAGAS", hint: "Uso de dados para antecipar infestação" },
+          { word: "MAPEAMENTO DE SOLO", hint: "Levantamento espacial de atributos do solo" }
+        ]
+      },
+      {
+        id: "pecuaria",
+        name: "Pecuária",
+        desc: "Rastreio e bem-estar animal",
+        words: [
+          { word: "COLEIRA INTELIGENTE", hint: "Dispositivo IoT no pescoço do animal" },
+          { word: "RASTREAMENTO", hint: "Localização contínua do rebanho" },
+          { word: "BEBEDOURO AUTOMATICO", hint: "Ponto de água com sensores de consumo" },
+          { word: "IDENTIFICACAO RFID", hint: "Tag sem fio para identificação individual" },
+          { word: "MONITORAMENTO DE SAUDE", hint: "Acompanhamento de sinais vitais" },
+          { word: "CONTROLE DE PASTO", hint: "Gestão de área de pastejo com IoT" }
+        ]
+      },
+      {
+        id: "maquinas",
+        name: "Máquinas",
+        desc: "Tratores e implementos conectados",
+        words: [
+          { word: "TRATOR AUTONOMO", hint: "Máquina que opera com pouca intervenção humana" },
+          { word: "GPS AGRICOLA", hint: "Posicionamento preciso para operações" },
+          { word: "PILOTO AUTOMATICO", hint: "Sistema de direção assistida na máquina" },
+          { word: "TELEMETRIA VEICULAR", hint: "Dados de desempenho enviados da máquina" },
+          { word: "COLHEITADEIRA", hint: "Máquina de colheita com sensores embarcados" },
+          { word: "MANUTENCAO PREDITIVA", hint: "Antecipação de falhas por dados de sensores" }
+        ]
+      },
+      {
+        id: "conectividade",
+        name: "Conectividade",
+        desc: "Redes e plataformas no campo",
+        words: [
+          { word: "LORA", hint: "Rede de longo alcance e baixo consumo" },
+          { word: "MQTT", hint: "Protocolo leve de mensagens IoT" },
+          { word: "GATEWAY", hint: "Ponte entre sensores e a nuvem" },
+          { word: "NUVEM AGRICOLA", hint: "Plataforma online de dados do campo" },
+          { word: "DASHBOARD", hint: "Painel visual de indicadores em tempo real" },
+          { word: "EDGE COMPUTING", hint: "Processamento local perto dos sensores" }
+        ]
+      }
+    ];
+
+    const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    const state = {
+      category: null,
+      entry: null,
+      guessed: new Set(),
+      hits: 0,
+      misses: 0,
+      over: false
+    };
+
+    const els = {
+      menu: document.getElementById("screen-menu"),
+      game: document.getElementById("screen-game"),
+      result: document.getElementById("screen-result"),
+      categories: document.getElementById("categories"),
+      chipCat: document.getElementById("chip-cat"),
+      hits: document.getElementById("hits"),
+      misses: document.getElementById("misses"),
+      word: document.getElementById("word"),
+      wordHint: document.getElementById("word-hint"),
+      wrongLetters: document.getElementById("wrong-letters"),
+      keyboard: document.getElementById("keyboard"),
+      resultBox: document.getElementById("result-box"),
+      resultTitle: document.getElementById("result-title"),
+      resultMsg: document.getElementById("result-msg"),
+      resultAnswer: document.getElementById("result-answer"),
+      resultHits: document.getElementById("result-hits"),
+      resultMisses: document.getElementById("result-misses"),
+      parts: [...document.querySelectorAll(".gallows .part")]
+    };
+
+    function showScreen(name) {
+      els.menu.classList.toggle("active", name === "menu");
+      els.game.classList.toggle("active", name === "game");
+      els.result.classList.toggle("active", name === "result");
+    }
+
+    function normalizeChar(ch) {
+      return ch
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+    }
+
+    function pickWord(category, avoid) {
+      const pool = category.words.filter((w) => w.word !== avoid);
+      const list = pool.length ? pool : category.words;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function renderCategories() {
+      els.categories.innerHTML = "";
+      CATEGORIES.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cat-btn";
+        btn.innerHTML = `<strong>${cat.name}</strong><small>${cat.desc}</small>`;
+        btn.addEventListener("click", () => startGame(cat));
+        els.categories.appendChild(btn);
+      });
+    }
+
+    function buildKeyboard() {
+      els.keyboard.innerHTML = "";
+      LETTERS.forEach((letter) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "key";
+        btn.textContent = letter;
+        btn.dataset.letter = letter;
+        btn.addEventListener("click", () => guess(letter));
+        els.keyboard.appendChild(btn);
+      });
+    }
+
+    function updateGallows() {
+      els.parts.forEach((part, i) => {
+        part.classList.toggle("visible", i < state.misses);
+      });
+    }
+
+    function updateWordDisplay() {
+      const parts = state.entry.word.trim().split(/\s+/);
+      els.word.innerHTML = "";
+      parts.forEach((part) => {
+        const line = document.createElement("div");
+        line.className = "word-line";
+        [...part].forEach((ch) => {
+          const slot = document.createElement("span");
+          slot.className = "letter-slot";
+          const norm = normalizeChar(ch);
+          slot.textContent = state.guessed.has(norm) ? ch : "";
+          line.appendChild(slot);
+        });
+        els.word.appendChild(line);
+      });
+    }
+
+    function updateStats() {
+      els.hits.textContent = String(state.hits);
+      els.misses.textContent = String(state.misses);
+      const wrong = [...state.guessed].filter((l) => {
+        const lettersInWord = new Set(
+          [...state.entry.word].filter((c) => c !== " ").map(normalizeChar)
+        );
+        return !lettersInWord.has(l);
+      });
+      els.wrongLetters.textContent = wrong.length
+        ? "Erros: " + wrong.join(" · ")
+        : "";
+    }
+
+    function uniqueLettersInWord(word) {
+      return new Set(
+        [...word].filter((c) => c !== " ").map(normalizeChar)
+      );
+    }
+
+    function isWon() {
+      const needed = uniqueLettersInWord(state.entry.word);
+      for (const l of needed) {
+        if (!state.guessed.has(l)) return false;
+      }
+      return true;
+    }
+
+    function setKeyState(letter, kind) {
+      const btn = els.keyboard.querySelector(`[data-letter="${letter}"]`);
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.remove("hit", "miss");
+      if (kind) btn.classList.add(kind);
+    }
+
+    function endGame(won) {
+      state.over = true;
+      [...els.keyboard.querySelectorAll(".key")].forEach((b) => (b.disabled = true));
+
+      els.resultBox.classList.toggle("win", won);
+      els.resultBox.classList.toggle("lose", !won);
+      els.resultTitle.textContent = won ? "Você acertou!" : "Fim de jogo";
+      els.resultMsg.textContent = won
+        ? "Boa! Você conhece IoT no agronegócio."
+        : "A forca ficou completa. A palavra era:";
+      els.resultAnswer.textContent = state.entry.word;
+      els.resultHits.textContent = String(state.hits);
+      els.resultMisses.textContent = String(state.misses);
+      showScreen("result");
+    }
+
+    function guess(letter) {
+      if (state.over || state.guessed.has(letter)) return;
+
+      state.guessed.add(letter);
+      const inWord = uniqueLettersInWord(state.entry.word).has(letter);
+
+      if (inWord) {
+        state.hits += 1;
+        setKeyState(letter, "hit");
+      } else {
+        state.misses += 1;
+        setKeyState(letter, "miss");
+        updateGallows();
+      }
+
+      updateWordDisplay();
+      updateStats();
+
+      if (isWon()) {
+        endGame(true);
+      } else if (state.misses >= MAX_ERRORS) {
+        endGame(false);
+      }
+    }
+
+    function startGame(category, keepSameWord) {
+      const previous = keepSameWord ? null : state.entry?.word;
+      state.category = category;
+      state.entry = pickWord(category, previous);
+      state.guessed = new Set();
+      state.hits = 0;
+      state.misses = 0;
+      state.over = false;
+
+      els.chipCat.textContent = category.name;
+      els.wordHint.textContent = state.entry.hint;
+      buildKeyboard();
+      updateWordDisplay();
+      updateStats();
+      updateGallows();
+      showScreen("game");
+    }
+
+    document.getElementById("btn-change").addEventListener("click", () => {
+      showScreen("menu");
+    });
+
+    document.getElementById("btn-restart").addEventListener("click", () => {
+      if (state.category) startGame(state.category);
+    });
+
+    document.getElementById("btn-menu").addEventListener("click", () => {
+      showScreen("menu");
+    });
+
+    document.getElementById("btn-again").addEventListener("click", () => {
+      if (state.category) startGame(state.category);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!els.game.classList.contains("active") || state.over) return;
+      const key = normalizeChar(e.key);
+      if (/^[A-Z]$/.test(key)) guess(key);
+    });
+
+    renderCategories();
+  </script>
+</body>
+</html>
